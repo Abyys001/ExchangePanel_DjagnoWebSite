@@ -25,8 +25,8 @@ SECRET_KEY = 'django-insecure-fy@w!cl3+ntlkf6x)-o(l6=+b5)cj%(5%4w1^vfjdepysmzn3l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', "https://panel.sarafipardis.co.uk", "panel.sarafipardis.co.uk", "www.panel.sarafipardis.co.uk"]
+    
 
 # Application definition
 
@@ -134,6 +134,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'Pages' / 'static'] 
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
