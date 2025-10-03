@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f7fafd;
+    }
+    .minimal-card {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,0.08);
+        padding: 2.5rem 2rem 2rem 2rem;
+        margin-top: 2rem;
+        transition: box-shadow 0.2s;
+    }
+    .minimal-card:focus-within, .minimal-card:hover {
+        box-shadow: 0 4px 32px 0 rgba(60,72,88,0.16);
+    }
+    .minimal-form-label {
+        font-weight: 500;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+    }
+    .minimal-form-control, select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #f9fafb;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+    .minimal-form-control:focus, select:focus {
+        border-color: #3182ce;
+        background: #fff;
+        outline: none;
+    }
+    .minimal-btn {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background: linear-gradient(90deg, #3182ce 0%, #63b3ed 100%);
+        color: #fff;
+        border: none;
+        box-shadow: 0 2px 8px 0 rgba(49,130,206,0.08);
+        transition: background 0.2s, box-shadow 0.2s;
+    }
+    .minimal-btn:hover, .minimal-btn:focus {
+        background: linear-gradient(90deg, #2563eb 0%, #4299e1 100%);
+        color: #fff;
+        box-shadow: 0 4px 16px 0 rgba(49,130,206,0.16);
+    }
+    .minimal-form-text {
+        color: #718096;
+        font-size: 0.95em;
+        margin-top: 0.25rem;
+    }
+    .invalid-feedback {
+        color: #e53e3e;
+        font-size: 0.95em;
+    }
+    .minimal-icon {
+        color: #3182ce;
+        margin-right: 0.5rem;
+    }
+    @media (max-width: 600px) {
+        .minimal-card { padding: 1.2rem 0.5rem; }
+    }
+    /* Style Django form fields by type/structure */
+    input, select, textarea {
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #f9fafb !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        transition: border-color 0.2s !important;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: #3182ce !important;
+        background: #fff !important;
+        outline: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // اگر css بالا نمیاد، مطمئن شوید که فایل base.html شما بلاک extra_head را در head قرار داده است.
+        // Minimal floating label effect
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.minimal-form-control, select').forEach(function(input) {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
+                });
+            });
+
+            // Minimalistic form validation
+            document.querySelectorAll('form.needs-validation').forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.classList.add('was-validated');
+                    }
+                }, false);
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="pricing-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    {{ title|default:"Create Price Type" }}
+                </h1>
+                <p class="mb-0 opacity-75">
+                    {% if form.instance.pk %}
+                        Edit price type for {{ category.name }}
+                    {% else %}
+                        Create a new price type for {{ category.name }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'pricing:category_detail' category.slug %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to {{ category.name }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="minimal-card">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="me-3">
+                        <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus-circle{% endif %} fa-2x minimal-icon"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1" style="font-weight:600;">
+                            {% if form.instance.pk %}
+                                Edit Price Type: {{ form.instance.name }}
+                            {% else %}
+                                Add New Price Type to {{ category.name }}
+                            {% endif %}
+                        </h4>
+                        <p class="minimal-form-text mb-0">
+                            {% if form.instance.pk %}
+                                Update the price type details
+                            {% else %}
+                                Create a new price type for this category
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <form method="post" class="needs-validation" novalidate autocomplete="off">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="minimal-form-label">
+                            <i class="fas fa-tag minimal-icon"></i>Name *
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="minimal-form-text">A descriptive name for this price type</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.action.id_for_label }}" class="minimal-form-label">
+                            <i class="fas fa-exchange-alt minimal-icon"></i>Action *
+                        </label>
+                        {{ form.action }}
+                        {% if form.action.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.action.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="minimal-form-text">Buy or sell operation</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.base_currency.id_for_label }}" class="minimal-form-label">
+                                    <i class="fas fa-coins minimal-icon"></i>Base Currency *
+                                </label>
+                                {{ form.base_currency }}
+                                {% if form.base_currency.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.base_currency.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.target_currency.id_for_label }}" class="minimal-form-label">
+                                    <i class="fas fa-coins minimal-icon"></i>Target Currency *
+                                </label>
+                                {{ form.target_currency }}
+                                {% if form.target_currency.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.target_currency.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="minimal-btn">
+                            <i class="fas fa-save me-2"></i>
+                            {% if form.instance.pk %}Update Price Type{% else %}Create Price Type{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

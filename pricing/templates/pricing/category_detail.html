@@ -1,0 +1,72 @@
+{% extends "pricing/base.html" %}
+
+{% block page_title %}{{ category.name }}{% endblock %}
+{% block page_subtitle %}Manage prices for {{ category.name }} category{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pricing:category_list' %}" class="btn btn-outline-light me-2">
+    <i class="fas fa-arrow-left me-1"></i>Back to Categories
+</a>
+<!-- Removed broken 'Add Price' button that caused NoReverseMatch -->
+{% endblock %}
+
+{% block pricing_content %}
+<div class="row">
+    <!-- Left: Prices Table -->
+    <div class="col-md-7">
+        <h2>{{ category.name }} - Prices</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Base</th>
+                    <th>Target</th>
+                    <th>Action</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for price in prices %}
+                <tr>
+                    <td>{{ price.title }}</td>
+                    <td>{{ price.base_currency }}</td>
+                    <td>{{ price.target_currency }}</td>
+                    <td>{{ price.get_action_display }}</td>
+                    <td>{{ price.price }}</td>
+                    <td>
+                        <a href="?edit={{ price.pk }}" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="{% url 'pricing:price_delete' price.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No prices yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Right: Price Form -->
+    <div class="col-md-5">
+        {% if edit_price %}
+            <h2>Edit Price</h2>
+        {% else %}
+            <h2>Add Price</h2>
+        {% endif %}
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-success">Save</button>
+                    {% if edit_price %}
+                        <a href="{% url 'pricing:category_detail' category.slug %}" class="btn btn-secondary">Cancel</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

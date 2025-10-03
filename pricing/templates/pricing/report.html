@@ -1,0 +1,216 @@
+{% extends "pricing/base.html" %}
+
+{% block page_title %}Pricing Reports{% endblock %}
+{% block page_subtitle %}Analytics and statistics for exchange rates{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pricing:export' %}" class="btn btn-outline-light me-2">
+    <i class="fas fa-download me-1"></i>Export Data
+</a>
+<a href="{% url 'pricing:price_update' %}" class="btn btn-outline-light">
+    <i class="fas fa-list me-1"></i>All Prices
+</a>
+{% endblock %}
+
+{% block pricing_content %}
+<!-- Main Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_prices }}</div>
+            <div class="stats-label">Total Prices</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_categories }}</div>
+            <div class="stats-label">Categories</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ recent_prices|length }}</div>
+            <div class="stats-label">Recent Updates</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_prices|add:total_categories }}</div>
+            <div class="stats-label">Total Items</div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Statistics -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="pricing-card">
+            <h5><i class="fas fa-chart-pie me-2"></i>Prices by Category</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Price Count</th>
+                            <th>Percentage</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in category_stats %}
+                        <tr>
+                            <td>
+                                <strong>{{ stat.name }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ stat.count }}</span>
+                            </td>
+                            <td>
+                                {% if total_prices > 0 %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ stat.count|div:total_prices|mul:100 }}%">
+                                            {{ stat.count|div:total_prices|mul:100|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">0%</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'pricing:category_detail' stat.slug %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                No categories found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="pricing-card">
+            <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+            <div class="list-group list-group-flush">
+                {% for price in recent_prices %}
+                <div class="list-group-item border-0 px-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ price.title }}</h6>
+                            <small class="text-muted">{{ price.category.name }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{% if price.action == 'buy' %}success{% else %}danger{% endif %}">
+                                {{ price.get_action_display }}
+                            </span>
+                            <br>
+                            <small class="text-muted">
+                                {% if price.created_at %}
+                                    {{ price.created_at|timesince }} ago
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <p>No recent activity</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Analytics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="pricing-card">
+            <h5><i class="fas fa-chart-line me-2"></i>Price Trends</h5>
+            <div class="text-center py-4">
+                <div class="text-muted">
+                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                    <p>Price trend visualization will be implemented here</p>
+                    <small>Chart integration coming soon</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="pricing-card">
+            <h5><i class="fas fa-chart-bar me-2"></i>Category Distribution</h5>
+            <div class="text-center py-4">
+                <div class="text-muted">
+                    <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                    <p>Category distribution chart will be implemented here</p>
+                    <small>Chart integration coming soon</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="pricing-card text-center">
+            <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+            <h5>Add New Price</h5>
+            <p class="text-muted">Create a new exchange rate entry</p>
+            <a href="{% url 'pricing:category_list' %}" class="btn btn-pricing">
+                <i class="fas fa-plus me-2"></i>Add Price
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="pricing-card text-center">
+            <i class="fas fa-file-export fa-3x text-success mb-3"></i>
+            <h5>Export Data</h5>
+            <p class="text-muted">Download all pricing data as CSV</p>
+            <a href="{% url 'pricing:export' %}" class="btn btn-outline-pricing">
+                <i class="fas fa-download me-2"></i>Export
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="pricing-card text-center">
+            <i class="fas fa-list fa-3x text-info mb-3"></i>
+            <h5>View All Prices</h5>
+            <p class="text-muted">Browse complete price list</p>
+            <a href="{% url 'pricing:price_update' %}" class="btn btn-outline-pricing">
+                <i class="fas fa-list me-2"></i>View All
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some basic interactivity
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

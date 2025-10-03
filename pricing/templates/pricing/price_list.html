@@ -1,0 +1,470 @@
+{% extends "pricing/base.html" %}
+{% load static %}
+
+{% block page_title %}Price Management{% endblock %}
+{% block page_subtitle %}Comprehensive overview of all pricing data{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary: #1a73e8;
+    --primary-light: #e8f0fe;
+    --secondary: #00897b;
+    --secondary-light: #e0f2f1;
+    --success: #388e3c;
+    --success-light: #e8f5e9;
+    --danger: #d32f2f;
+    --danger-light: #ffebee;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --text-muted: #b0b8c1;
+    --bg-light: #f8fafc;
+    --bg-white: #ffffff;
+    --border-light: #e2e8f0;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --transition: all 0.3s ease;
+}
+
+/* استایل‌های اصلی */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-card {
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    border-top: 4px solid var(--primary);
+    text-align: center;
+}
+
+.stats-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.5rem 0;
+}
+
+.stats-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.filter-section {
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.table-container {
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+}
+
+.pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pricing-table th {
+    background: var(--primary-light);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.pricing-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.badge-danger {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.price-value {
+    font-weight: 600;
+    color: var(--success);
+}
+
+.btn-edit {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.btn-edit:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* چیدمان فشرده برای کارت‌ها */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-card {
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.action-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.action-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+}
+
+/* استایل‌های جدید برای لیست دسته‌بندی‌ها */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.category-card {
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--primary);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.category-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.category-price-count {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.category-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.category-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .categories-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pricing-table {
+        font-size: 0.8rem;
+    }
+    
+    .pricing-table th,
+    .pricing-table td {
+        padding: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block pricing_content %}
+<!-- کارت‌های آمار -->
+<div class="stats-grid">
+    <div class="stats-card">
+        <div class="stats-number">{{ price_types.count }}</div>
+        <div class="stats-label">Total Price Types</div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-number">{{ categories.count }}</div>
+        <div class="stats-label">Categories</div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-number">{{ active_prices_count }}</div>
+        <div class="stats-label">Active Prices</div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-number">{{ today_updates_count }}</div>
+        <div class="stats-label">Today's Updates</div>
+    </div>
+</div>
+
+<!-- بخش لیست دسته‌بندی‌ها -->
+<div class="categories-grid">
+    {% for category in categories %}
+    <div class="category-card">
+        <div class="category-header">
+            <h3 class="category-name">{{ category.name }}</h3>
+            <span class="category-price-count">{{ category.price_types.count }} types</span>
+        </div>
+        
+        {% if category.description %}
+        <p class="category-description">{{ category.description }}</p>
+        {% endif %}
+        
+        <div class="category-actions">
+            <a href="{% url 'pricing:category_prices_form' category.slug %}" class="btn-edit">
+                Edit Prices
+            </a>
+            <a href="{% url 'pricing:edit_category' category.pk %}" class="btn-edit" style="background: var(--secondary-light); color: var(--secondary);">
+                Edit Category
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="category-card">
+        <div class="category-header">
+            <h3 class="category-name">No Categories</h3>
+        </div>
+        <p class="category-description">No categories available. Create your first category to get started.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- بخش فیلتر -->
+<div class="filter-section">
+    <div class="filter-grid">
+        <div>
+            <input type="text" class="filter-input" id="searchInput" placeholder="Search...">
+        </div>
+        
+        <div>
+            <select class="filter-input" id="categoryFilter">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.name }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <select class="filter-input" id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- جدول قیمت‌ها -->
+<div class="table-container">
+    <div class="table-scroll">
+        <table class="pricing-table" id="pricesTable">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Price Type</th>
+                    <th>Price</th>
+                    <th>Updated</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in price_data %}
+                <tr data-category="{{ item.category.name|lower }}" data-status="{% if item.current_price != 'N/A' %}active{% else %}inactive{% endif %}">
+                    <td>{{ item.category.name }}</td>
+                    <td><strong>{{ item.price_type.name }}</strong></td>
+                    <td>
+                        {% if item.current_price != 'N/A' %}
+                            <span class="price-value">{{ item.current_price }}</span>
+                        {% else %}
+                            <span>N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.last_updated %}
+                            {{ item.last_updated|date:"M d, H:i" }}
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.current_price != 'N/A' %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'pricing:category_prices_form' item.slug %}" class="btn-edit">
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        No pricing data available
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- اقدامات سریع -->
+<div class="quick-actions">
+    <div class="action-card">
+        <div class="action-header">
+            <i class="fas fa-chart-line"></i>
+            <span class="action-title">Analytics</span>
+        </div>
+        <div class="action-buttons">
+            <button class="btn-sm">Export</button>
+            <button class="btn-sm">Reports</button>
+        </div>
+    </div>
+    
+    <div class="action-card">
+        <div class="action-header">
+            <i class="fas fa-history"></i>
+            <span class="action-title">Activity</span>
+        </div>
+        <div class="action-buttons">
+            <button class="btn-sm">History</button>
+            <button class="btn-sm">Refresh</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const rows = document.querySelectorAll('#pricesTable tbody tr');
+    
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const categoryValue = categoryFilter.value.toLowerCase();
+        const statusValue = statusFilter.value.toLowerCase();
+        
+        rows.forEach(row => {
+            if (row.querySelector('td[colspan]')) return;
+            
+            const text = row.textContent.toLowerCase();
+            const category = row.dataset.category;
+            const status = row.dataset.status;
+            
+            const show = text.includes(searchTerm) && 
+                       (categoryValue === '' || category === categoryValue) &&
+                       (statusValue === '' || status === statusValue);
+            
+            row.style.display = show ? '' : 'none';
+        });
+    }
+    
+    searchInput.addEventListener('input', filterTable);
+    categoryFilter.addEventListener('change', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login - Pardis Exchange{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-blue: #2c3e50;
+        --secondary-blue: #34495e;
+        --accent-blue: #3498db;
+        --light-blue: #ecf0f1;
+        --medium-blue: #bdc3c7;
+        --dark-blue: #2c3e50;
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .login-outer-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start; /* Move to top */
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+    }
+
+    .login-container {
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        width: 100vw;
+        max-width: 540px; /* Bigger */
+        margin-top: 40px; /* Closer to top */
+        margin-left: 0;
+        margin-right: 0;
+        overflow: hidden;
+        animation: fadeInUp 0.8s ease-out;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        /* Remove side spacing */
+    }
+
+    .login-header {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-header::before {
+        content: "";
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .login-header::after {
+        content: "";
+        position: absolute;
+        bottom: -30px;
+        left: -30px;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .login-logo {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-logo span {
+        color: var(--accent-blue);
+    }
+
+    .login-subtitle {
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+
+    .login-body {
+        padding: 2.5rem 2.5rem 1.2rem 2.5rem; /* کاهش فاصله پایین */
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-group {
+        margin-bottom: 1.2rem; /* کاهش فاصله بین فیلدها */
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--dark-blue);
+        text-align: left;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid var(--light-blue);
+        border-radius: 10px;
+        font-size: 1.08rem;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        text-align: left;
+    }
+
+    .form-control:focus {
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        outline: none;
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2980b9 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.08rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        margin-top: 0.3rem; /* کمی کمتر */
+        text-align: center;
+    }
+
+    .btn-login:hover {
+        background: linear-gradient(135deg, #2980b9 0%, var(--accent-blue) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .btn-login:active {
+        transform: translateY(0);
+    }
+
+    .login-footer {
+        text-align: center;
+        padding: 0.7rem 2rem 1.2rem; /* کاهش فاصله بالا و پایین */
+        color: var(--medium-blue);
+        font-size: 0.9rem;
+    }
+
+    .login-footer a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .login-footer a:hover {
+        color: var(--primary-blue);
+        text-decoration: underline;
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Error messages */
+    .errorlist {
+        color: #e74c3c;
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0 0;
+        font-size: 0.85rem;
+        text-align: left;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+        .login-container {
+            max-width: 98vw;
+            border-radius: 0;
+            margin-top: 0;
+        }
+        .login-header, .login-body {
+            padding: 1.2rem 1.2rem 0.7rem 1.2rem;
+        }
+        .login-footer {
+            padding: 0.5rem 1.2rem 0.7rem;
+        }
+    }
+    @media (max-width: 480px) {
+        .login-container {
+            max-width: 100vw;
+            border-radius: 0;
+            margin-top: 0;
+        }
+        .login-header, .login-body {
+            padding: 1rem 1rem 0.5rem 1rem;
+        }
+        .login-footer {
+            padding: 0.3rem 1rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-outer-wrapper">
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-logo">PARDIS<span>EXCHANGE</span></div>
+            <p class="login-subtitle">Administrator Login Panel</p>
+        </div>
+
+        <div class="login-body">
+            <form method="post" style="display: flex; flex-direction: column; align-items: stretch;">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username" style="text-align: left;">Username</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" required autofocus>
+                    {% if form.username.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.username.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="password" style="text-align: left;">Password</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+                    {% if form.password.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="form-group">
+                        <ul class="errorlist">
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="btn-login pulse">Login to Dashboard</button>
+            </form>
+        </div>
+        <div class="login-footer">
+            {% block login_footer %}
+            <span>Forgot your password? ask for support</span>
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation to form elements
+        const formGroups = document.querySelectorAll('.form-group');
+        formGroups.forEach((group, index) => {
+            group.style.opacity = '0';
+            group.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                group.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                group.style.opacity = '1';
+                group.style.transform = 'translateY(0)';
+            }, index * 150);
+        });
+
+        // Remove pulse animation after first interaction
+        const loginBtn = document.querySelector('.btn-login');
+        const removePulse = () => {
+            loginBtn.classList.remove('pulse');
+            document.removeEventListener('mousedown', removePulse);
+            document.removeEventListener('keydown', removePulse);
+        };
+
+        document.addEventListener('mousedown', removePulse);
+        document.addEventListener('keydown', removePulse);
+    });
+</script>
+{% endblock %}

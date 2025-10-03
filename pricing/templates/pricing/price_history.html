@@ -1,0 +1,304 @@
+{% extends "pricing/base.html" %}
+
+{% block page_title %}Price History{% endblock %}
+{% block page_subtitle %}Track changes and updates to exchange rates{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'pricing:price_update' %}" class="btn btn-outline-light me-2">
+    <i class="fas fa-arrow-left me-1"></i>Back to Prices
+</a>
+<a href="{% url 'pricing:export' %}" class="btn btn-outline-light">
+    <i class="fas fa-download me-1"></i>Export
+</a>
+{% endblock %}
+
+{% block pricing_content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ prices.count }}</div>
+            <div class="stats-label">Total Prices</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">
+                {% for price in prices %}
+                    {% if forloop.first and price.created_at.date == today %}1{% else %}0{% endif %}
+                {% endfor %}
+            </div>
+            <div class="stats-label">Today's Updates</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">
+                {% for price in prices %}
+                    {% if price.created_at.date == yesterday %}1{% endif %}
+                {% endfor %}
+            </div>
+            <div class="stats-label">Yesterday's Updates</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">
+                {% for price in prices %}
+                    {% if price.created_at.date >= last_week %}1{% endif %}
+                {% endfor %}
+            </div>
+            <div class="stats-label">This Week</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Options -->
+<div class="pricing-card mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search prices...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="dateFilter">
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="categoryFilter">
+                <option value="">All Categories</option>
+                {% for price in prices %}
+                    {% ifchanged price.category.name %}
+                        <option value="{{ price.category.name }}">{{ price.category.name }}</option>
+                    {% endifchanged %}
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Price History Table -->
+<div class="pricing-card">
+    <div class="table-responsive">
+        <table class="table table-pricing" id="historyTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Title</th>
+                    <th>Base Currency</th>
+                    <th>Target Currency</th>
+                    <th>Action</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for price in prices %}
+                <tr data-date="{{ price.created_at.date|date:'Y-m-d' }}" data-category="{{ price.category.name }}">
+                    <td>
+                        <small class="text-muted">
+                            {% if price.created_at %}
+                                {{ price.created_at|date:"M d, Y" }}
+                                <br>
+                                <span class="text-muted">{{ price.created_at|time:"H:i" }}</span>
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ price.category.name }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ price.title }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ price.base_currency }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success">{{ price.target_currency }}</span>
+                    </td>
+                    <td>
+                        {% if price.action == 'buy' %}
+                            <span class="badge bg-success">Buy</span>
+                        {% else %}
+                            <span class="badge bg-danger">Sell</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong class="text-primary">{{ price.price }}</strong>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'pricing:price_update' price.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'pricing:price_delete' price.pk %}" class="btn btn-sm btn-outline-danger" 
+                               onclick="return confirm('Are you sure you want to delete this price?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="fas fa-history fa-3x mb-3"></i>
+                            <p>No price history found.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Timeline View -->
+<div class="pricing-card mt-4">
+    <h5><i class="fas fa-clock me-2"></i>Timeline View</h5>
+    <div class="timeline">
+        {% for price in prices|slice:":10" %}
+        <div class="timeline-item">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">{{ price.title }}</h6>
+                        <p class="text-muted mb-0">{{ price.category.name }} - {{ price.base_currency }} → {{ price.target_currency }}</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-{% if price.action == 'buy' %}success{% else %}danger{% endif %}">
+                            {{ price.get_action_display }}
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                            {% if price.created_at %}
+                                {{ price.created_at|timesince }} ago
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-3">
+            <i class="fas fa-clock fa-2x mb-2"></i>
+            <p>No recent activity</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #667eea;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 3px #e9ecef;
+    }
+    
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .timeline-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: -29px;
+        top: 17px;
+        width: 2px;
+        height: calc(100% + 1rem);
+        background: #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const dateFilter = document.getElementById('dateFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const table = document.getElementById('historyTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const dateValue = dateFilter.value;
+        const categoryValue = categoryFilter.value.toLowerCase();
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const date = row.dataset.date;
+            const category = row.dataset.category.toLowerCase();
+
+            const matchesSearch = text.includes(searchTerm);
+            const matchesDate = !dateValue || matchesDateFilter(date, dateValue);
+            const matchesCategory = !categoryValue || category === categoryValue;
+
+            if (matchesSearch && matchesDate && matchesCategory) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function matchesDateFilter(date, filter) {
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0];
+        const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+        const monthAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+
+        switch(filter) {
+            case 'today':
+                return date === today;
+            case 'yesterday':
+                return date === yesterday;
+            case 'week':
+                return date >= weekAgo;
+            case 'month':
+                return date >= monthAgo;
+            default:
+                return true;
+        }
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    dateFilter.addEventListener('change', filterTable);
+    categoryFilter.addEventListener('change', filterTable);
+});
+</script>
+{% endblock %}

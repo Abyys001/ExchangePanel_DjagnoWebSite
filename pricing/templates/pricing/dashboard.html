@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Dashboard</h1>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Total Categories</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_categories }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Total Price Types</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_price_types }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Total Prices</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_prices }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-header">Changes Today</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ today_changes }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories List -->
+    <h2 class="mb-3">Categories</h2>
+    <div class="list-group mb-4">
+        {% for category in categories %}
+        <div class="list-group-item">
+            <strong>{{ category.name }}</strong> 
+            <span class="badge bg-secondary">{{ category.price_types.count }} Price Types</span>
+        </div>
+        {% empty %}
+        <p>No active categories found.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Recent Changes -->
+    <h2 class="mb-3">Recent Changes</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Price Type</th>
+                <th>Old Price</th>
+                <th>New Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for change in recent_changes %}
+            <tr>
+                <td>{{ change.changed_at }}</td>
+                <td>{{ change.price_type.category.name }}</td>
+                <td>{{ change.price_type.name }}</td>
+                <td>{{ change.old_price }}</td>
+                <td>{{ change.new_price }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No recent changes.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
