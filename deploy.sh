@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/botcynococo/repositories/ExchangePanel/
+cd /home/botcynococo/exchange_panel/
 source /home/botcynococo/virtualenv/PardisPanel/3.10/bin/activategit 
 git pull origin main
 pip install -r requirements.txt
