@@ -20,16 +20,18 @@ class Category(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+    def clean(self):
+        if self.name:
+            self.name = self.name.strip()
+            if not self.name:
+                raise ValidationError("Category name cannot be empty.")
+
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name_plural = "Categories"
         ordering = ["name"]
-
-
-from django.db import models
-from django.utils import timezone
 
 class PriceType(models.Model):
     """
@@ -113,6 +115,15 @@ class Price(models.Model):
 
         if self.price_type.base_currency == self.price_type.target_currency:
             raise ValidationError("Base and target currencies cannot be the same.")
+        
+        # Ensure only one current price per PriceType
+        if self.is_current:
+            existing_current = Price.objects.filter(
+                price_type=self.price_type, 
+                is_current=True
+            ).exclude(pk=self.pk).exists()
+            if existing_current:
+                raise ValidationError("Only one current price is allowed per price type.")
 
     def __str__(self):
         return f"{self.price_type.name}: {self.price}"

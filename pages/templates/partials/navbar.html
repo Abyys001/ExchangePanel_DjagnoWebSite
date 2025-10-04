@@ -59,9 +59,9 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <span class="nav-link disabled" style="pointer-events: none; opacity: 0.7; cursor: not-allowed;">
+                        <a class="nav-link" href="{% url 'users:logout' %}">
                             <i class="fas fa-sign-out-alt"></i> Logout
-                        </span>
+                        </a>
                     </li>
                 {% else %}
                     <li class="nav-item d-flex align-items-center">
