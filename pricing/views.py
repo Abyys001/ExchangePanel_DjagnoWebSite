@@ -26,17 +26,21 @@ def create_category(request):
         formset = PriceTypeFormSet(request.POST)
         
         try:
-            if form.is_valid() and formset.is_valid():
-                with transaction.atomic():
-                    category = form.save()
-                    price_types = formset.save(commit=False)
-                    for price_type in price_types:
-                        price_type.category = category
-                        price_type.save()
+            if form.is_valid():
+                if formset.is_valid():
+                    with transaction.atomic():
+                        category = form.save()
+                        formset.instance = category
+                        formset.save()
                     
-                messages.success(request, f'Category "{category.name}" created successfully!')
-                logger.info(f'Category "{category.name}" created by user {request.user.username}')
-                return redirect('pricing:category_list')
+                    messages.success(request, f'Category "{category.name}" created successfully!')
+                    logger.info(f'Category "{category.name}" created by user {request.user.username}')
+                    return redirect('pricing:category_list')
+                else:
+                    messages.error(request, 'Please correct the errors in price types.')
+            else:
+                messages.error(request, 'Please correct the errors in category information.')
+                    
         except ValidationError as e:
             messages.error(request, f'Validation error: {str(e)}')
             logger.error(f'Validation error in create_category: {str(e)}')
@@ -53,17 +57,104 @@ def create_category(request):
     }
     return render(request, 'pricing/category_form.html', context)
 
+# Helper function to skip validation for empty forms
+def _clean_form_with_empty_check(self, form):
+    """
+    Custom form clean method that skips validation for completely empty forms.
+    """
+    # Check if all fields are empty
+    is_empty = True
+    for field_name in form.fields:
+        if field_name != 'DELETE' and form.cleaned_data.get(field_name):
+            is_empty = False
+            break
+    
+    # If form is completely empty and it's an extra form, skip validation
+    if is_empty and form.prefix.startswith('price_types-__prefix__'):
+        return
+    
+    # Otherwise, run normal validation
+    return self._old_clean_form(form)
+
+@login_required
+def edit_category(request, pk):
+    """
+    Handle editing of an existing Category and its related PriceTypes.
+    """
+    category = get_object_or_404(Category, pk=pk)
+
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        formset = PriceTypeFormSet(request.POST, instance=category)
+        
+        if form.is_valid() and formset.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save()
+                    instances = formset.save(commit=False)
+                    
+                    # Set category for new instances
+                    for instance in instances:
+                        instance.category = category
+                        instance.save()
+                    
+                    # Delete marked instances
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                
+                messages.success(request, f'Category "{category.name}" updated successfully!')
+                return redirect('pricing:category_list')
+                
+            except Exception as e:
+                messages.error(request, 'An error occurred while updating the category.')
+                logger.error(f'Error in edit_category: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CategoryForm(instance=category)
+        formset = PriceTypeFormSet(instance=category)
+
+    context = {
+        'form': form,
+        'formset': formset,
+    }
+    return render(request, 'pricing/category_form.html', context)
+
 @login_required
 def category_list(request):
-    """
-    Display a list of all categories with their related price types and prices.
-    """
     categories = Category.objects.prefetch_related(
         'price_types', 'price_types__prices'
     ).order_by('-created_at').all()
 
+    # Calculate total price types
+    total_price_types = 0
+    most_active_category_count = 0
+    most_active_category_name = ""
+    latest_category_count = 0
+    latest_category_name = ""
+
+    if categories:
+        # Calculate total price types
+        for category in categories:
+            total_price_types += category.price_types.count()
+
+        # Find most active category (category with most price types)
+        most_active_category = max(categories, key=lambda cat: cat.price_types.count())
+        most_active_category_count = most_active_category.price_types.count()
+        most_active_category_name = most_active_category.name
+
+        # Latest category (first in the ordered list)
+        latest_category = categories[0]
+        latest_category_count = latest_category.price_types.count()
+        latest_category_name = latest_category.name
+
     context = {
-        'categories': categories
+        'categories': categories,
+        'total_price_types': total_price_types,
+        'most_active_category_count': most_active_category_count,
+        'most_active_category_name': most_active_category_name,
+        'latest_category_count': latest_category_count,
+        'latest_category_name': latest_category_name,
     }
     return render(request, 'pricing/category_list.html', context)
 
@@ -161,15 +252,15 @@ def category_prices_form(request, category_slug):
                             if new_price <= 0:
                                 raise ValueError("Price must be greater than zero")
                                 
-                            current_price = price_type.get_current_price_object()
+                            current_price_obj = price_type.get_current_price_object()
                             
                             # اگر قیمت تغییر کرده یا قیمت جاری وجود ندارد
-                            if current_price is None or new_price != current_price.price:
+                            if current_price_obj is None or new_price != current_price_obj.price:
                                 # ایجاد یا به‌روزرسانی قیمت از طریق مدل
-                                if current_price:
+                                if current_price_obj:
                                     # به‌روزرسانی قیمت موجود
-                                    current_price.price = new_price
-                                    current_price.save()
+                                    current_price_obj.price = new_price
+                                    current_price_obj.save()
                                 else:
                                     # ایجاد قیمت جدید
                                     Price.objects.create(

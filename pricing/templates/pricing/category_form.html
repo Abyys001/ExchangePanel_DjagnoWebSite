@@ -2,8 +2,6 @@
 {% load widget_tweaks %}
 
 {% block extra_css %}
-<!-- Tailwind CSS CDN -->
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
 <style>
     body {
         background: #f8fafc;
@@ -42,11 +40,21 @@
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
+    .is-invalid {
+        border-color: #ef4444;
+    }
     .invalid-feedback {
         color: #ef4444;
         font-size: 0.75rem;
         margin-top: 0.25rem;
         display: block;
+    }
+    .form-errors {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
     }
     .section-title {
         color: #1f2937;
@@ -191,6 +199,11 @@
         width: 16px;
         height: 16px;
     }
+    .empty-form-message {
+        text-align: center;
+        padding: 2rem;
+        color: #6b7280;
+    }
 </style>
 {% endblock %}
 
@@ -207,19 +220,40 @@
         {% endif %}
     </p>
 
+    <!-- Display Form Errors -->
+    {% if form.errors or formset.errors %}
+    <div class="form-errors">
+        <strong>Please correct the following errors:</strong>
+        <ul class="mt-2">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+            {% if formset.non_form_errors %}
+                {% for error in formset.non_form_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+
     <form method="post" autocomplete="off">
         {% csrf_token %}
         
         <div class="mb-8">
             <h2 class="section-title">Category Information</h2>
-            {{ form.non_field_errors }}
             
             <div class="space-y-4">
-                {% for field in form.visible_fields %}
+                {% for field in form %}
                     <div>
-                        {% if field|widget_type == "checkboxinput" %}
+                        {% if field.field.widget.input_type == "checkbox" %}
                             <div class="checkbox-container">
-                                <input type="checkbox" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="custom-checkbox" {% if field.value %}checked{% endif %}>
+                                {{ field }}
                                 <label for="{{ field.id_for_label }}" class="checkbox-label{% if field.field.required %} required{% endif %}">
                                     {{ field.label }}
                                 </label>
@@ -229,13 +263,15 @@
                                 {{ field.label }}
                             </label>
                             {{ field|add_class:"form-input" }}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
                         {% endif %}
                         {% if field.help_text %}
                             <div class="text-xs text-gray-500 mt-1">{{ field.help_text }}</div>
                         {% endif %}
-                        {% for error in field.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
                     </div>
                 {% endfor %}
             </div>
@@ -248,40 +284,63 @@
             <div id="price-types-list" class="space-y-4">
                 {% for price_type_form in formset %}
                     <div class="price-type-card" data-form-index="{{ forloop.counter0 }}">
-                        {{ price_type_form.non_field_errors }}
+                        {% for hidden in price_type_form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <!-- Display form errors for this form -->
+                        {% if price_type_form.non_field_errors %}
+                            <div class="mb-3 p-2 bg-red-50 border border-red-200 rounded">
+                                {% for error in price_type_form.non_field_errors %}
+                                    <div class="text-sm text-red-600">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
                         <div class="grid-2">
                             {% for field in price_type_form.visible_fields %}
-                                <div>
-                                    {% if field|widget_type == "checkboxinput" %}
-                                        <div class="checkbox-container">
-                                            <input type="checkbox" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="custom-checkbox" {% if field.value %}checked{% endif %}>
-                                            <label for="{{ field.id_for_label }}" class="checkbox-label{% if field.field.required %} required{% endif %}">
+                                {% if field.name != 'DELETE' %}
+                                    <div>
+                                        {% if field.field.widget.input_type == "checkbox" %}
+                                            <div class="checkbox-container">
+                                                {{ field }}
+                                                <label for="{{ field.id_for_label }}" class="checkbox-label{% if field.field.required %} required{% endif %}">
+                                                    {{ field.label }}
+                                                </label>
+                                            </div>
+                                        {% else %}
+                                            <label for="{{ field.id_for_label }}" class="form-label{% if field.field.required %} required{% endif %}">
                                                 {{ field.label }}
                                             </label>
-                                        </div>
-                                    {% else %}
-                                        <label for="{{ field.id_for_label }}" class="form-label{% if field.field.required %} required{% endif %}">
-                                            {{ field.label }}
-                                        </label>
-                                        {{ field|add_class:"form-input" }}
-                                    {% endif %}
-                                    {% if field.help_text %}
-                                        <div class="text-xs text-gray-500 mt-1">{{ field.help_text }}</div>
-                                    {% endif %}
-                                    {% for error in field.errors %}
-                                        <div class="invalid-feedback">{{ error }}</div>
-                                    {% endfor %}
-                                </div>
+                                            {{ field|add_class:"form-input" }}
+                                        {% endif %}
+                                        
+                                        {% if field.errors %}
+                                            {% for error in field.errors %}
+                                                <div class="invalid-feedback">{{ error }}</div>
+                                            {% endfor %}
+                                        {% endif %}
+                                        
+                                        {% if field.help_text %}
+                                            <div class="text-xs text-gray-500 mt-1">{{ field.help_text }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                         
+                        <!-- DELETE Field -->
                         {% if price_type_form.DELETE %}
                             <div class="checkbox-container mt-3">
-                                <input type="checkbox" id="{{ price_type_form.DELETE.id_for_label }}" name="{{ price_type_form.DELETE.html_name }}" class="custom-checkbox">
+                                {{ price_type_form.DELETE }}
                                 <label for="{{ price_type_form.DELETE.id_for_label }}" class="checkbox-label">
                                     Delete this price type
                                 </label>
                             </div>
+                        {% endif %}
+                        
+                        <!-- Remove Button -->
+                        {% if formset.can_delete %}
                             <button type="button" class="btn-remove" onclick="removePriceType(this)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -289,6 +348,10 @@
                                 </svg>
                             </button>
                         {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="empty-form-message">
+                        No price types added yet. Click "Add New Price Type" to get started.
                     </div>
                 {% endfor %}
             </div>
@@ -314,143 +377,103 @@
 
 {% block extra_js %}
 <script>
+// Store the empty form HTML
+const emptyFormHtml = `{{ formset.empty_form|escapejs }}`;
+
 function removePriceType(btn) {
-    var formDiv = btn.closest('.price-type-card');
-    var deleteInput = formDiv.querySelector('input[type=checkbox][name$="-DELETE"]');
+    const formDiv = btn.closest('.price-type-card');
+    const deleteInput = formDiv.querySelector('input[name$="-DELETE"]');
+    
     if (deleteInput) {
+        // Mark for deletion and hide
         deleteInput.checked = true;
         formDiv.style.display = 'none';
     } else {
+        // Remove completely for new forms
         formDiv.remove();
-        updateTotalForms();
+        updateFormIndexes();
     }
 }
 
+function updateFormIndexes() {
+    const forms = document.querySelectorAll('.price-type-card:not([style*="display: none"])');
+    const totalFormsInput = document.getElementById('id_price_types-TOTAL_FORMS');
+    
+    forms.forEach((form, index) => {
+        // Update all inputs, selects, textareas, and labels
+        form.querySelectorAll('input, select, textarea, label').forEach(element => {
+            // Update name attributes
+            if (element.name) {
+                element.name = element.name.replace(/price_types-\d+/, `price_types-${index}`);
+            }
+            // Update id attributes
+            if (element.id) {
+                element.id = element.id.replace(/id_price_types-\d+/, `id_price_types-${index}`);
+            }
+            // Update for attributes
+            if (element.htmlFor) {
+                element.htmlFor = element.htmlFor.replace(/id_price_types-\d+/, `id_price_types-${index}`);
+            }
+        });
+        
+        // Update data attribute
+        form.setAttribute('data-form-index', index);
+    });
+    
+    // Update total forms count
+    totalFormsInput.value = forms.length;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    var addBtn = document.getElementById('add-price-type');
-    var priceTypesList = document.getElementById('price-types-list');
-    var totalFormsInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
-    var emptyFormHtml = `{% filter escapejs %}{{ formset.empty_form.as_p }}{% endfilter %}`;
+    const addBtn = document.getElementById('add-price-type');
+    const priceTypesList = document.getElementById('price-types-list');
+    const totalFormsInput = document.getElementById('id_price_types-TOTAL_FORMS');
 
     addBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        var formNum = parseInt(totalFormsInput.value);
-        var newFormHtml = emptyFormHtml.replace(/__prefix__/g, formNum);
-
-        var tempDiv = document.createElement('div');
-        tempDiv.innerHTML = newFormHtml;
         
-        var wrapper = document.createElement('div');
-        wrapper.className = 'price-type-card';
-        wrapper.setAttribute('data-form-index', formNum);
+        const formNum = parseInt(totalFormsInput.value);
+        const newFormHtml = emptyFormHtml.replace(/__prefix__/g, formNum);
         
-        var grid = document.createElement('div');
-        grid.className = 'grid-2';
+        // Create new form element
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newFormHtml.trim();
         
-        var fields = tempDiv.querySelectorAll('p');
-        fields.forEach(function(p) {
-            var col = document.createElement('div');
-            
-            var label = p.querySelector('label');
-            var input = p.querySelector('input, select, textarea');
-            var isCheckbox = input && input.type === "checkbox";
-            
-            if (isCheckbox) {
-                var checkboxContainer = document.createElement('div');
-                checkboxContainer.className = 'checkbox-container';
-                
-                var newCheckbox = document.createElement('input');
-                newCheckbox.type = 'checkbox';
-                newCheckbox.id = input.id.replace('__prefix__', formNum);
-                newCheckbox.name = input.name.replace('__prefix__', formNum);
-                newCheckbox.className = 'custom-checkbox';
-                
-                var newLabel = document.createElement('label');
-                newLabel.htmlFor = newCheckbox.id;
-                newLabel.className = 'checkbox-label';
-                newLabel.textContent = label ? label.textContent : '';
-                
-                checkboxContainer.appendChild(newCheckbox);
-                checkboxContainer.appendChild(newLabel);
-                col.appendChild(checkboxContainer);
-            } else {
-                if (label) {
-                    var newLabel = document.createElement('label');
-                    newLabel.htmlFor = label.htmlFor.replace('__prefix__', formNum);
-                    newLabel.className = 'form-label';
-                    newLabel.textContent = label.textContent;
-                    if (label.classList.contains('required')) {
-                        newLabel.className += ' required';
-                    }
-                    col.appendChild(newLabel);
-                }
-                
-                if (input) {
-                    input.id = input.id.replace('__prefix__', formNum);
-                    input.name = input.name.replace('__prefix__', formNum);
-                    input.className = 'form-input';
-                    col.appendChild(input);
-                }
-            }
-            
-            var help = p.querySelector('.helptext');
-            if (help) {
-                help.className = 'text-xs text-gray-500 mt-1';
-                col.appendChild(help);
-            }
-            
-            var errors = p.querySelector('.errorlist');
-            if (errors) {
-                errors.className = 'invalid-feedback';
-                col.appendChild(errors);
-            }
-            
-            grid.appendChild(col);
-        });
+        const newForm = tempDiv.firstChild;
+        newForm.className = 'price-type-card';
+        newForm.setAttribute('data-form-index', formNum);
         
-        wrapper.appendChild(grid);
-
-        // Add DELETE checkbox if present
-        var deleteInput = tempDiv.querySelector('input[type=checkbox][name$="-DELETE"]');
-        if (deleteInput) {
-            var deleteContainer = document.createElement('div');
-            deleteContainer.className = 'checkbox-container mt-3';
-            
-            var newDeleteInput = document.createElement('input');
-            newDeleteInput.type = 'checkbox';
-            newDeleteInput.id = deleteInput.id.replace('__prefix__', formNum);
-            newDeleteInput.name = deleteInput.name.replace('__prefix__', formNum);
-            newDeleteInput.className = 'custom-checkbox';
-            
-            var deleteLabel = document.createElement('label');
-            deleteLabel.htmlFor = newDeleteInput.id;
-            deleteLabel.className = 'checkbox-label';
-            deleteLabel.textContent = 'Delete this price type';
-            
-            deleteContainer.appendChild(newDeleteInput);
-            deleteContainer.appendChild(deleteLabel);
-            wrapper.appendChild(deleteContainer);
-        }
+        // Add to the list
+        priceTypesList.appendChild(newForm);
         
-        var removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'btn-remove';
-        removeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-        removeBtn.onclick = function() { removePriceType(removeBtn); };
-        wrapper.appendChild(removeBtn);
-        
-        priceTypesList.appendChild(wrapper);
+        // Update total forms count
         totalFormsInput.value = formNum + 1;
+        
+        // Initialize new form styling
+        initializeFormStyles(newForm);
     });
 
-    window.updateTotalForms = function() {
-        var forms = priceTypesList.querySelectorAll('.price-type-card');
-        var count = 0;
-        forms.forEach(function(formDiv) {
-            if (formDiv.style.display !== 'none') count++;
+    // Initialize styles for existing forms
+    function initializeFormStyles(formElement) {
+        // Add form inputs styling
+        formElement.querySelectorAll('input:not([type="checkbox"]):not([type="hidden"]), select, textarea').forEach(input => {
+            input.className = 'form-input';
         });
-        totalFormsInput.value = count;
-    };
+        
+        // Add checkbox styling
+        formElement.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.className = 'custom-checkbox';
+        });
+        
+        // Add remove button functionality
+        const removeBtn = formElement.querySelector('.btn-remove');
+        if (removeBtn) {
+            removeBtn.onclick = function() { removePriceType(this); };
+        }
+    }
+
+    // Initialize all existing forms
+    document.querySelectorAll('.price-type-card').forEach(initializeFormStyles);
 });
 </script>
 {% endblock %}

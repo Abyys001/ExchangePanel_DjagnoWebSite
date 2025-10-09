@@ -8,9 +8,9 @@
 {% comment %} <a href="{% url 'pricing:export' %}" class="btn btn-outline-light me-2">
     <i class="fas fa-download me-1"></i>Export Data
 </a> {% endcomment %}
-{% comment %} <a href="{% url 'pricing:price_list' %}" class="btn btn-outline-light">
+<a href="{% url 'pricing:price_list' %}" class="btn btn-outline-light">
     <i class="fas fa-list me-1"></i>All Prices
-</a> {% endcomment %}
+</a>
 {% endblock %}
 
 {% block pricing_content %}
@@ -22,7 +22,7 @@
                 <i class="fas fa-layer-group"></i>
             </div>
             <div class="stats-number">{{ categories.count }}</div>
-            <div class="stats-label">Categories</div>
+            <div class="stats-label">Total Categories</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -31,14 +31,9 @@
                 <i class="fas fa-money-bill-wave"></i>
             </div>
             <div class="stats-number">
-                {% with total=0 %}
-                    {% for category in categories %}
-                        {% with total=total|add:category.price_types.count %}{% endwith %}
-                    {% endfor %}
-                    {{ total }}
-                {% endwith %}
+                {{ total_price_types }}
             </div>
-            <div class="stats-label">Price Types</div>
+            <div class="stats-label">Total Price Types</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -47,15 +42,18 @@
                 <i class="fas fa-chart-line"></i>
             </div>
             <div class="stats-number">
-                {% if categories %}
-                    {% with first_category=categories.0 %}
-                        {{ first_category.price_types.count }}
-                    {% endwith %}
+                {% if most_active_category_count %}
+                    {{ most_active_category_count }}
                 {% else %}
                     0
                 {% endif %}
             </div>
             <div class="stats-label">Most Active Category</div>
+            {% if most_active_category_name %}
+            <div class="stats-subtext small text-muted mt-1">
+                {{ most_active_category_name }}
+            </div>
+            {% endif %}
         </div>
     </div>
     <div class="col-md-3">
@@ -64,15 +62,18 @@
                 <i class="fas fa-star"></i>
             </div>
             <div class="stats-number">
-                {% if categories %}
-                    {% with last_category=categories.last %}
-                        {{ last_category.price_types.count }}
-                    {% endwith %}
+                {% if latest_category_count %}
+                    {{ latest_category_count }}
                 {% else %}
                     0
                 {% endif %}
             </div>
             <div class="stats-label">Latest Category</div>
+            {% if latest_category_name %}
+            <div class="stats-subtext small text-muted mt-1">
+                {{ latest_category_name }}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -120,16 +121,6 @@
                 </form>
             </div>
             
-            <div class="d-grid gap-2">
-                {% comment %} <a href="{% url 'pricing:category_detail' category.slug %}" class="btn btn-primary">
-                    <i class="fas fa-eye me-2"></i>View Prices
-                </a> {% endcomment %}
-                {# لینک افزودن Price Type غیرفعال شده است چون وجود ندارد #}
-                {% comment %} <a href="#" class="btn btn-outline-primary add-price-type-btn disabled" tabindex="-1" aria-disabled="true" style="pointer-events: none;">
-                    <i class="fas fa-plus me-2"></i>Add Price Type
-                </a> {% endcomment %}
-            </div>
-            
             {% if category.price_types.all %}
             <div class="mt-3 pt-3 border-top">
                 <h6 class="text-muted mb-2 small text-uppercase">Price Types</h6>
@@ -156,6 +147,15 @@
                     </div>
                     {% endfor %}
                 </div>
+                {% if category.price_types.count > 3 %}
+                <div class="text-center mt-2">
+                    <small class="text-muted">+ {{ category.price_types.count|add:"-3" }} more</small>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="mt-3 pt-3 border-top text-center">
+                <small class="text-muted">No price types yet</small>
             </div>
             {% endif %}
         </div>
@@ -180,130 +180,20 @@
         <div class="pricing-card soft-blue-card">
             <h5 class="text-primary"><i class="fas fa-chart-bar me-2"></i>Analytics</h5>
             <div class="d-grid gap-2">
-                {# لینک گزارش غیرفعال شده است چون وجود ندارد #}
-                {% comment %} <a href="#" class="btn btn-outline-primary disabled" tabindex="-1" aria-disabled="true" style="pointer-events: none;">
-                    <i class="fas fa-chart-line me-2"></i>View Reports
-                </a>
                 <a href="{% url 'pricing:price_list' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-table me-2"></i>All Prices Table
-                </a> {% endcomment %}
+                    <i class="fas fa-table me-2"></i>View All Prices
+                </a>
             </div>
         </div>
     </div>
     
     <div class="col-md-6">
         <div class="pricing-card soft-blue-card">
-            <h5 class="text-primary"><i class="fas fa-tools me-2"></i>Tools</h5>
+            <h5 class="text-primary"><i class="fas fa-tools me-2"></i>Management</h5>
             <div class="d-grid gap-2">
-                {% comment %} <a href="{% url 'pricing:export' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-file-export me-2"></i>Export Data
-                </a>
-                {# لینک ایمپورت غیرفعال شده است چون وجود ندارد #}
-                <a href="#" class="btn btn-outline-primary disabled" tabindex="-1" aria-disabled="true" style="pointer-events: none;">
-                    <i class="fas fa-file-import me-2"></i>Import Data
-                </a> {% endcomment %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Category Modal -->
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="categoryModalLabel">
+                <a href="{% url 'pricing:create_category' %}" class="btn btn-outline-primary">
                     <i class="fas fa-plus-circle me-2"></i>Add New Category
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="categoryForm" method="post">
-                    {% csrf_token %}
-                    <input type="text" name="name" placeholder="Category name" class="form-control mb-3" required>
-                    <button type="submit" id="createCategoryBtn" class="btn btn-primary">Create Category</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- PriceType Modal -->
-<div class="modal fade" id="priceTypeModal" tabindex="-1" aria-labelledby="priceTypeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="priceTypeModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>Add New Price Type
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="priceTypeForm" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" id="priceTypeCategorySlug" name="category_slug">
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceTypeName" class="form-label fw-bold">
-                                    <i class="fas fa-tag me-1"></i>Price Type Name
-                                </label>
-                                <input type="text" class="form-control" id="priceTypeName" name="name" required
-                                       placeholder="e.g. Buy USDT with IRR">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceTypeAction" class="form-label fw-bold">
-                                    <i class="fas fa-exchange-alt me-1"></i>Action
-                                </label>
-                                <select class="form-select" id="priceTypeAction" name="action" required>
-                                    <option value="">Select</option>
-                                    <option value="buy">Buy</option>
-                                    <option value="sell">Sell</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceTypeBaseCurrency" class="form-label fw-bold">
-                                    <i class="fas fa-coins me-1"></i>Base Currency
-                                </label>
-                                <input type="text" class="form-control" id="priceTypeBaseCurrency" name="base_currency" required
-                                       placeholder="e.g. USDT">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priceTypeTargetCurrency" class="form-label fw-bold">
-                                    <i class="fas fa-coins me-1"></i>Target Currency
-                                </label>
-                                <input type="text" class="form-control" id="priceTypeTargetCurrency" name="target_currency" required
-                                       placeholder="e.g. IRR">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="priceTypeDescription" class="form-label fw-bold">
-                            <i class="fas fa-info-circle me-1"></i>Description
-                        </label>
-                        <textarea class="form-control" id="priceTypeDescription" name="description" 
-                                  rows="3" placeholder="Optional description..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Cancel
-                </button>
-                <button type="button" class="btn btn-primary" id="savePriceType">
-                    <i class="fas fa-save me-1"></i>Save Price Type
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -379,6 +269,11 @@
 .stats-label {
     color: #7f8c8d;
     font-size: 14px;
+}
+
+.stats-subtext {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
 }
 
 /* Pricing Cards */
@@ -463,79 +358,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-/* Modal Styles */
-.modal-content {
-    border-radius: 16px;
-    border: none;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-}
-
-.modal-header {
-    background: linear-gradient(135deg, var(--primary-blue), #0d47a1);
-    color: white;
-    border: none;
-    padding: 1.5rem;
-}
-
-.modal-title {
-    font-weight: 600;
-    font-size: 1.25rem;
-}
-
-.btn-close-white {
-    filter: brightness(0) invert(1);
-    opacity: 0.8;
-}
-
-.btn-close-white:hover {
-    opacity: 1;
-}
-
-.modal-body {
-    padding: 2rem;
-}
-
-.modal-footer {
-    padding: 1.5rem;
-    border-top: 1px solid #e9ecef;
-    background-color: #f8f9fa;
-}
-
-/* Form improvements */
-.form-control-lg {
-    font-size: 1.1rem;
-    padding: 0.75rem 1rem;
-}
-
-.form-label {
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-.form-text {
-    color: #6c757d;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-/* Button improvements */
-.btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-/* Animation for modal */
-.modal.fade .modal-dialog {
-    transition: transform 0.3s ease-out;
-    transform: translate(0, -50px);
-}
-
-.modal.show .modal-dialog {
-    transform: none;
 }
 
 /* Custom Delete Modal Styles */

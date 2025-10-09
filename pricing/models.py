@@ -57,9 +57,9 @@ class PriceType(models.Model):
         return f"{self.category.name} - {self.name}"
 
     def get_current_price(self):
-        """Return the current price value or 0 if not found"""
+        """Return the current price value or None if not found"""
         current_price = self.prices.filter(is_current=True).first()
-        return current_price.price if current_price else 0
+        return current_price.price if current_price else None
     
     def get_current_description(self):
         """Return the current price description or empty string if not found"""
